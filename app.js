@@ -120,12 +120,36 @@
     store.set('user', st.user);
   }
 
+  /** Запрос с подписью шага: если браузер его заблокирует, в ошибке будет видно, где именно. */
+  async function step(name, url, opts) {
+    try {
+      return await fetch(url, opts);
+    } catch (e) {
+      throw new Error('браузер не пустил запрос (' + name + ')');
+    }
+  }
+
   async function download() {
-    var r = await api('/resources/download?path=' + encodeURIComponent(CFG.file));
+    if (CFG.proxyUrl) {
+      var p = await step('посредник: скачивание', CFG.proxyUrl + '?op=download',
+        { headers: { 'X-Dela-Token': 'OAuth ' + token } });
+      if (p.status === 401) throw new AuthError();
+      if (p.status === 404) return null;
+      if (!p.ok) throw new Error('посредник: скачивание, ответ ' + p.status);
+      var t = await p.text();
+      return t.trim() && t.trim() !== 'null' ? JSON.parse(t) : null;
+    }
+    var r;
+    try {
+      r = await api('/resources/download?path=' + encodeURIComponent(CFG.file));
+    } catch (e) {
+      if (e instanceof AuthError) throw e;
+      throw new Error('браузер не пустил запрос (ссылка на скачивание)');
+    }
     if (r.status === 404) return null;
     if (!r.ok) throw new Error('Диск ответил ' + r.status);
     var href = (await r.json()).href;
-    var f = await fetch(href);
+    var f = await step('скачивание файла', href);
     if (f.status === 404) return null;
     if (!f.ok) throw new Error('скачивание: ' + f.status);
     var text = await f.text();
@@ -133,10 +157,26 @@
   }
 
   async function upload(obj) {
-    var r = await api('/resources/upload?path=' + encodeURIComponent(CFG.file) + '&overwrite=true');
+    var body = JSON.stringify(obj);
+    if (CFG.proxyUrl) {
+      var p = await step('посредник: загрузка', CFG.proxyUrl + '?op=upload', {
+        method: 'POST', body: body,
+        headers: { 'X-Dela-Token': 'OAuth ' + token, 'Content-Type': 'application/json' }
+      });
+      if (p.status === 401) throw new AuthError();
+      if (!p.ok) throw new Error('посредник: загрузка, ответ ' + p.status);
+      return;
+    }
+    var r;
+    try {
+      r = await api('/resources/upload?path=' + encodeURIComponent(CFG.file) + '&overwrite=true');
+    } catch (e) {
+      if (e instanceof AuthError) throw e;
+      throw new Error('браузер не пустил запрос (ссылка на загрузку)');
+    }
     if (!r.ok) throw new Error('Диск ответил ' + r.status);
     var href = (await r.json()).href;
-    var u = await fetch(href, { method: 'PUT', body: JSON.stringify(obj) });
+    var u = await step('загрузка файла', href, { method: 'PUT', body: body });
     if (!u.ok && u.status !== 201 && u.status !== 202) throw new Error('загрузка: ' + u.status);
   }
 
@@ -169,9 +209,7 @@
         logout('Вход в Яндекс устарел. Войдите заново.');
         return;
       }
-      st.error = e instanceof TypeError
-        ? 'Нет связи с Яндекс Диском (сеть или браузер заблокировал запрос)'
-        : 'Ошибка синхронизации: ' + e.message;
+      st.error = 'Ошибка синхронизации: ' + (e instanceof TypeError ? 'нет связи' : e.message);
       console.error(e);
     } finally {
       st.syncing = false;
