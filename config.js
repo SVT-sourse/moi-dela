@@ -1,7 +1,7 @@
 // Настройки сайта «Мои дела».
 window.DELA_CONFIG = {
   // ID приложения с oauth.yandex.ru (не секрет). Пусто — вход ещё не настроен.
-  clientId: '',
+  clientId: '52bd7d1440ea4e9c8fa6643a5eb31555',
   // Адрес сайта; должен в точности совпадать с Redirect URI в настройках приложения на oauth.yandex.ru.
   redirectUri: 'https://svt-sourse.github.io/moi-dela/',
   // Файл в папке приложения на Диске — тот же, что у телефона.
