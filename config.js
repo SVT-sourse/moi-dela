@@ -8,5 +8,5 @@ window.DELA_CONFIG = {
   file: 'app:/moi-dela.json',
   // Адрес посредника proxy.php на своём сервере (браузеру нельзя напрямую читать файл на Диске).
   // Пусто — сайт пробует обращаться к Диску напрямую.
-  proxyUrl: ''
+  proxyUrl: 'https://dela.pnesco.ru/proxy.php'
 };
