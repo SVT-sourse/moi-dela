@@ -1,0 +1,12 @@
+{
+  "name": "Мои дела",
+  "short_name": "Мои дела",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#F2F4F8",
+  "theme_color": "#1E6FD9",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

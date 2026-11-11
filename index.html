@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Мои дела</title>
+  <meta name="theme-color" content="#1E6FD9">
+  <link rel="icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Экран входа -->
+  <section id="login" class="login" hidden>
+    <div class="login-card">
+      <img src="icon-192.png" alt="" width="72" height="72">
+      <h1>Мои дела</h1>
+      <p>Дела и заметки хранятся на вашем Яндекс Диске и совпадают с приложением на телефоне.</p>
+      <button id="loginBtn" class="btn primary big">Войти через Яндекс</button>
+      <p class="muted small" id="loginNote"></p>
+    </div>
+  </section>
+
+  <!-- Приложение -->
+  <div id="app" hidden>
+    <header class="top">
+      <div class="brand">
+        <strong>Мои дела</strong>
+        <span id="today" class="muted"></span>
+      </div>
+      <nav class="tabs">
+        <button data-tab="tasks" class="tab active">Дела <span id="cTasks" class="count"></span></button>
+        <button data-tab="notes" class="tab">Заметки <span id="cNotes" class="count"></span></button>
+        <button data-tab="trash" class="tab">Корзина <span id="cTrash" class="count"></span></button>
+      </nav>
+      <div class="top-right">
+        <button id="syncBtn" class="sync" title="Синхронизировать сейчас">⟳ <span id="syncText"></span></button>
+        <button id="settingsBtn" class="icon-btn" title="Настройки">⚙</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Дела -->
+      <section id="tab-tasks" class="tab-page">
+        <form id="addForm" class="add-form">
+          <input id="addTitle" placeholder="Что нужно сделать? (Enter — сохранить)" autocomplete="off" required>
+          <div class="add-row">
+            <label>Дата <input id="addDate" type="date"></label>
+            <button type="button" class="chip" data-quick="0">Сегодня</button>
+            <button type="button" class="chip" data-quick="1">Завтра</button>
+            <label>Время <input id="addTime" type="time"></label>
+            <label class="check urgent"><input id="addUrgent" type="checkbox"> ‼ Срочно</label>
+            <label class="check"><input id="addCal" type="checkbox"> 📅 В календарь</label>
+            <button class="btn primary">✓ Добавить</button>
+          </div>
+        </form>
+        <div id="taskList"></div>
+      </section>
+
+      <!-- Заметки -->
+      <section id="tab-notes" class="tab-page" hidden>
+        <div class="notes-bar">
+          <input id="noteSearch" type="search" placeholder="🔍 Поиск по заметкам">
+          <button id="newNote" class="btn primary">+ Новая заметка</button>
+        </div>
+        <div class="notes-layout">
+          <div id="noteList" class="note-list"></div>
+          <div id="noteEditor" class="note-editor" hidden>
+            <div class="editor-bar">
+              <span id="noteInfo" class="muted small"></span>
+              <button id="notePin" class="icon-btn" title="Закрепить">📌</button>
+              <button id="noteDelete" class="icon-btn" title="В корзину">🗑</button>
+              <button id="noteClose" class="icon-btn" title="Закрыть">✕</button>
+            </div>
+            <textarea id="noteText" placeholder="Первая строка — заголовок.&#10;Дальше — текст заметки…"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Корзина -->
+      <section id="tab-trash" class="tab-page" hidden>
+        <div class="trash-bar">
+          <p class="muted">Выполненные дела и удалённые заметки. Через 7 дней удаляются автоматически.</p>
+          <button id="clearTrash" class="btn danger">Очистить корзину</button>
+        </div>
+        <div id="trashList"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Редактирование дела -->
+  <dialog id="taskDialog">
+    <form method="dialog" id="taskForm">
+      <h2>Изменить дело</h2>
+      <textarea id="editTitle" rows="2" required></textarea>
+      <div class="add-row">
+        <label>Дата <input id="editDate" type="date"></label>
+        <label>Время <input id="editTime" type="time"></label>
+      </div>
+      <div class="add-row">
+        <label class="check urgent"><input id="editUrgent" type="checkbox"> ‼ Срочно</label>
+        <label class="check"><input id="editCal" type="checkbox"> 📅 В календарь</label>
+      </div>
+      <div class="dialog-buttons">
+        <button type="button" id="editTrash" class="btn danger-outline">🗑 В корзину</button>
+        <span class="spacer"></span>
+        <button value="cancel" class="btn">Отмена</button>
+        <button value="save" class="btn primary">✓ Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Настройки -->
+  <dialog id="settingsDialog">
+    <form method="dialog">
+      <h2>Настройки</h2>
+      <p>Вход: <strong id="userName"></strong></p>
+      <p class="muted small" id="lastSync"></p>
+      <h3>Ключ для телефона</h3>
+      <p class="muted small">Нужен, только если на телефоне не получается войти через Яндекс.
+        Скопируйте ключ, перешлите себе и вставьте в приложении: «Синхронизация» → «Вставить ключ с компьютера».
+        Никому его не передавайте — по нему открывается ваш список дел.</p>
+      <div class="key-row">
+        <input id="keyField" type="password" readonly>
+        <button type="button" id="showKey" class="btn">Показать</button>
+        <button type="button" id="copyKey" class="btn">Копировать</button>
+      </div>
+      <div class="dialog-buttons">
+        <button type="button" id="logoutBtn" class="btn danger-outline">Выйти</button>
+        <span class="spacer"></span>
+        <button class="btn primary">Закрыть</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="config.js"></script>
+  <script src="sync.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
